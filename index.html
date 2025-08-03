@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/examples/js/controls/OrbitControls.js"></script>
   <style>
     body {
@@ -69,41 +68,6 @@
     .active-section {
       display: block !important;
     }
-    #landDetailSection div, #marketSection div, #myLandList div {
-      margin: 5px 0;
-      padding: 6px 10px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 8px;
-      word-break: break-word;
-    }
-    #marketplaceList div, #myLandList div {
-      cursor: pointer;
-    }
-    #marketplaceList div:hover, #myLandList div:hover {
-      background: rgba(26, 188, 156, 0.4);
-    }
-    #uploadSection input, #uploadSection button {
-      display: block;
-      margin: 10px auto;
-      max-width: 300px;
-      width: 90%;
-      font-size: 1rem;
-      padding: 8px;
-      border-radius: 8px;
-      border: none;
-    }
-    #uploadSection button {
-      background-color: #1abc9c;
-      color: white;
-      cursor: pointer;
-      font-weight: 700;
-    }
-    #uploadStatus {
-      text-align: center;
-      margin-top: 10px;
-      min-height: 1.2em;
-      color: #0f0;
-    }
   </style>
 </head>
 <body>
@@ -114,127 +78,84 @@
 
 <nav>
   <button onclick="showSection('mapSection')">🗺️ Land Map</button>
-  <button onclick="showSection('landDetailSection')">🌽 Land Detail</button>
   <button onclick="showSection('marketSection')">🛒 Marketplace</button>
-  <button onclick="showSection('uploadSection')">📄 Upload Model</button>
-  <button onclick="showSection('myLandSection')">👤 My Land</button>
 </nav>
 
-<!-- แผนที่ 3D -->
 <section id="mapSection" class="active-section">
-  <h2>Land Map 3D (Mixed Sizes)</h2>
+  <h2>Land Map 3D</h2>
   <div id="threeContainer"></div>
 </section>
 
-<!-- รายละเอียดที่ดิน -->
-<section id="landDetailSection">
-  <h2>Land Detail</h2>
-  <div><b>ID:</b> <span id="landId">-</span></div>
-  <div><b>Type:</b> <span id="landType">-</span></div>
-  <div><b>Owner:</b> <span id="landOwner">-</span></div>
-  <div><b>Price (tKUB):</b> <span id="landPrice">-</span></div>
-  <div><b>Description:</b></div>
-  <div id="landDescription" style="white-space: pre-wrap; min-height: 3em;">-</div>
-  <div><b>Model Preview:</b></div>
-  <div id="landModelPreview" style="width: 100%; height: 300px; background: #111; border-radius: 8px;"></div>
-  <div style="margin-top: 15px;">
-    <button id="buyLandBtn" onclick="buyLand()" style="background:#27ae60; display:none;">💰 Buy Land</button>
-    <button id="sellLandBtn" onclick="sellLand()" style="background:#c0392b; display:none;">📤 Sell Land</button>
-    <button id="cancelSellBtn" onclick="cancelSell()" style="background:#e67e22; display:none;">❌ Cancel Sell</button>
-  </div>
-</section>
-
-<!-- Marketplace -->
 <section id="marketSection">
-  <h2>Marketplace</h2>
-  <div id="marketplaceList">Loading...</div>
-</section>
-
-<!-- Upload โมเดล -->
-<section id="uploadSection">
-  <h2>Upload 3D Model / Image</h2>
-  <input type="file" id="modelFile" accept=".glb,.gltf,.jpg,.png" />
-  <button onclick="uploadModel()">Upload</button>
-  <p id="uploadStatus"></p>
-</section>
-
-<!-- ที่ดินของฉัน -->
-<section id="myLandSection">
-  <h2>My Land</h2>
-  <div id="myLandList">Loading...</div>
+  <h2>Coming Soon: Marketplace</h2>
+  <p style="text-align:center;">NFTs & Land Trading System is under development...</p>
 </section>
 
 <script>
-// 🔐 โค้ด JavaScript ทั้งหมดของคุณ เช่น connectWallet, init3DMap, blockchainData
-// โปรดดูเวอร์ชันเต็มในโค้ดเดิมของคุณ (หรือให้ฉันวางต่อให้ตรงนี้ได้ถ้าต้องการ)
-</script>
-<script>
-let currentSection = 'mapSection';
+  let scene, camera, renderer, controls;
 
-function showSection(id) {
-  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active-section'));
-  document.getElementById(id).classList.add('active-section');
-}
-
-let scene, camera, renderer, controls;
-
-function init3DMap() {
-  const container = document.getElementById("threeContainer");
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
-  camera.position.set(10, 15, 20);
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  container.innerHTML = "";
-  container.appendChild(renderer.domElement);
-
-  controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(10, 10, 10);
-  scene.add(light);
-  scene.add(new THREE.AmbientLight(0x404040));
-
-  // พื้น
-  const planeGeo = new THREE.PlaneGeometry(100, 100);
-  const planeMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-  const plane = new THREE.Mesh(planeGeo, planeMat);
-  plane.rotation.x = -Math.PI / 2;
-  scene.add(plane);
-
-  // Land Cube ตัวอย่าง
-  for (let i = 0; i < 10; i++) {
-    const cubeGeo = new THREE.BoxGeometry(2, 1, 2);
-    const cubeMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
-    const cube = new THREE.Mesh(cubeGeo, cubeMat);
-    cube.position.set((i % 5) * 3 - 6, 0.5, Math.floor(i / 5) * 3 - 3);
-    scene.add(cube);
+  function showSection(id) {
+    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active-section'));
+    document.getElementById(id).classList.add('active-section');
   }
 
-  animate();
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
-
-function connectWallet() {
-  if (typeof window.ethereum !== "undefined") {
-    ethereum.request({ method: 'eth_requestAccounts' }).then(accounts => {
-      document.getElementById("balanceDisplay").textContent = "🟢 Connected: " + accounts[0].slice(0, 10) + "...";
-    });
-  } else {
-    alert("Please install MetaMask first.");
+  function connectWallet() {
+    if (typeof window.ethereum !== "undefined") {
+      ethereum.request({ method: 'eth_requestAccounts' }).then(accounts => {
+        document.getElementById("balanceDisplay").textContent = "🟢 Connected: " + accounts[0].slice(0, 10) + "...";
+      });
+    } else {
+      alert("Please install MetaMask first.");
+    }
   }
-}
 
-window.onload = () => {
-  init3DMap();
-  showSection('mapSection');
-};
+  function init3DMap() {
+    const container = document.getElementById("threeContainer");
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(10, 15, 20);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.innerHTML = "";
+    container.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x404040));
+
+    const planeGeo = new THREE.PlaneGeometry(100, 100);
+    const planeMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const plane = new THREE.Mesh(planeGeo, planeMat);
+    plane.rotation.x = -Math.PI / 2;
+    scene.add(plane);
+
+    // เพิ่ม cube แสดงแปลงที่ดิน
+    for (let i = 0; i < 25; i++) {
+      const cubeGeo = new THREE.BoxGeometry(2, 1, 2);
+      const cubeMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
+      const cube = new THREE.Mesh(cubeGeo, cubeMat);
+      cube.position.set((i % 5) * 3 - 6, 0.5, Math.floor(i / 5) * 3 - 6);
+      scene.add(cube);
+    }
+
+    animate();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  window.onload = () => {
+    init3DMap();
+    showSection('mapSection');
+  };
 </script>
 </body>
 </html>
