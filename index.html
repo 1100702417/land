@@ -168,6 +168,73 @@
 // 🔐 โค้ด JavaScript ทั้งหมดของคุณ เช่น connectWallet, init3DMap, blockchainData
 // โปรดดูเวอร์ชันเต็มในโค้ดเดิมของคุณ (หรือให้ฉันวางต่อให้ตรงนี้ได้ถ้าต้องการ)
 </script>
+<script>
+let currentSection = 'mapSection';
 
+function showSection(id) {
+  document.querySelectorAll('section').forEach(sec => sec.classList.remove('active-section'));
+  document.getElementById(id).classList.add('active-section');
+}
+
+let scene, camera, renderer, controls;
+
+function init3DMap() {
+  const container = document.getElementById("threeContainer");
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+  camera.position.set(10, 15, 20);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  container.innerHTML = "";
+  container.appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(10, 10, 10);
+  scene.add(light);
+  scene.add(new THREE.AmbientLight(0x404040));
+
+  // พื้น
+  const planeGeo = new THREE.PlaneGeometry(100, 100);
+  const planeMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+  const plane = new THREE.Mesh(planeGeo, planeMat);
+  plane.rotation.x = -Math.PI / 2;
+  scene.add(plane);
+
+  // Land Cube ตัวอย่าง
+  for (let i = 0; i < 10; i++) {
+    const cubeGeo = new THREE.BoxGeometry(2, 1, 2);
+    const cubeMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
+    const cube = new THREE.Mesh(cubeGeo, cubeMat);
+    cube.position.set((i % 5) * 3 - 6, 0.5, Math.floor(i / 5) * 3 - 3);
+    scene.add(cube);
+  }
+
+  animate();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+function connectWallet() {
+  if (typeof window.ethereum !== "undefined") {
+    ethereum.request({ method: 'eth_requestAccounts' }).then(accounts => {
+      document.getElementById("balanceDisplay").textContent = "🟢 Connected: " + accounts[0].slice(0, 10) + "...";
+    });
+  } else {
+    alert("Please install MetaMask first.");
+  }
+}
+
+window.onload = () => {
+  init3DMap();
+  showSection('mapSection');
+};
+</script>
 </body>
 </html>
