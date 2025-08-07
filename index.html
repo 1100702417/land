@@ -1,161 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BTL-VerseLand Complete</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MetaLand - Bitkub Chain</title>
+  <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/examples/js/controls/OrbitControls.js"></script>
-  <style>
-    body {
-      margin: 0; font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: #fff;
-      overflow-x: hidden;
-    }
-    h1, h2 {
-      text-align: center;
-      margin: 0.5em 0;
-    }
-    nav {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin: 10px 0 15px 0;
-    }
-    nav button {
-      background-color: #1abc9c;
-      color: #fff;
-      border: none;
-      padding: 10px 15px;
-      font-size: 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    nav button:hover {
-      background-color: #16a085;
-    }
-    #threeContainer {
-      width: 100vw;
-      height: 50vh;
-      background-color: #000;
-      touch-action: none;
-      border-radius: 8px;
-      margin: 0 auto;
-      max-width: 1000px;
-      box-shadow: 0 0 12px #0ff;
-    }
-    #balanceDisplay {
-      text-align: center;
-      margin: 10px auto;
-      font-size: 1.3rem;
-      font-weight: 700;
-      max-width: 1000px;
-      margin-bottom: 15px;
-    }
-    section {
-      display: none;
-      padding: 15px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 12px;
-      margin: 10px auto 20px auto;
-      max-width: 1000px;
-    }
-    .active-section {
-      display: block !important;
-    }
-  </style>
 </head>
 <body>
-
-<h1>🌐 BTL-VerseLand Complete</h1>
-<button onclick="connectWallet()" style="display:block; margin: 0 auto 10px auto; max-width: 300px; font-size:1.1rem;">🔗 Connect Metamask (KUB Testnet)</button>
-<div id="balanceDisplay">💰 Balance: -</div>
-
-<nav>
-  <button onclick="showSection('mapSection')">🗺️ Land Map</button>
-  <button onclick="showSection('marketSection')">🛒 Marketplace</button>
-</nav>
-
-<section id="mapSection" class="active-section">
-  <h2>Land Map 3D</h2>
-  <div id="threeContainer"></div>
-</section>
-
-<section id="marketSection">
-  <h2>Coming Soon: Marketplace</h2>
-  <p style="text-align:center;">NFTs & Land Trading System is under development...</p>
-</section>
-
-<script>
-  let scene, camera, renderer, controls;
-
-  function showSection(id) {
-    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active-section'));
-    document.getElementById(id).classList.add('active-section');
-  }
-
-  function connectWallet() {
-    if (typeof window.ethereum !== "undefined") {
-      ethereum.request({ method: 'eth_requestAccounts' }).then(accounts => {
-        document.getElementById("balanceDisplay").textContent = "🟢 Connected: " + accounts[0].slice(0, 10) + "...";
-      });
-    } else {
-      alert("Please install MetaMask first.");
-    }
-  }
-
-  function init3DMap() {
-    const container = document.getElementById("threeContainer");
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(10, 15, 20);
-
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    container.innerHTML = "";
-    container.appendChild(renderer.domElement);
-
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(10, 10, 10);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0x404040));
-
-    const planeGeo = new THREE.PlaneGeometry(100, 100);
-    const planeMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const plane = new THREE.Mesh(planeGeo, planeMat);
-    plane.rotation.x = -Math.PI / 2;
-    scene.add(plane);
-
-    // เพิ่ม cube แสดงแปลงที่ดิน
-    for (let i = 0; i < 25; i++) {
-      const cubeGeo = new THREE.BoxGeometry(2, 1, 2);
-      const cubeMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
-      const cube = new THREE.Mesh(cubeGeo, cubeMat);
-      cube.position.set((i % 5) * 3 - 6, 0.5, Math.floor(i / 5) * 3 - 6);
-      scene.add(cube);
-    }
-
-    animate();
-  }
-
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-
-  window.onload = () => {
-    init3DMap();
-    showSection('mapSection');
-  };
-</script>
+  <div class="container">
+    <h1>🌐 MetaLand</h1>
+    <button id="connectBtn">🔗 เชื่อมต่อ MetaMask (Bitkub Chain)</button>
+    <div id="walletAddress">🧾 Wallet: -</div>
+    <div id="balanceDisplay">
+      💰 KUB (Gas): -<br />
+      🪙 KKUB (Token): -
+    </div>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
