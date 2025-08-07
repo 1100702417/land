@@ -57,6 +57,8 @@
       font-weight: 700;
       max-width: 1000px;
       margin-bottom: 15px;
+      white-space: nowrap;
+      overflow-x: auto;
     }
     section {
       display: none;
@@ -109,7 +111,7 @@
 <body>
 
   <h1>🌐 BTL-VerseLand Mainnet</h1>
-  <button onclick="connectWallet()" style="display:block; margin: 0 auto 10px auto; max-width: 300px; font-size:1.1rem;">🔗 Connect Metamask (Bitkub Chain Mainnet)</button>
+  <button id="connectBtn" style="display:block; margin: 0 auto 10px auto; max-width: 300px; font-size:1.1rem;">🔗 Connect MetaMask (Bitkub Chain Mainnet)</button>
   <div id="balanceDisplay">💰 Balance: -</div>
 
   <nav>
@@ -166,68 +168,104 @@
 <script>
   let provider, signer, userAddress;
 
-  // Bitkub Chain Mainnet config
+  // Bitkub Chain Mainnet config (Chain ID: 8217 = 0x2019)
   const kubMainnet = {
-    chainId: '0x65EE',  // 26046 decimal
+    chainId: '0x2019',
     chainName: 'Bitkub Chain Mainnet',
     nativeCurrency: { name: 'KUB', symbol: 'KUB', decimals: 18 },
     rpcUrls: ['https://rpc.bitkubchain.io'],
     blockExplorerUrls: ['https://bkcscan.com']
   };
 
-  // ตัวอย่าง Contract KKUB (ใส่ contract address จริง)
-  const KKUB_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'; // แก้ไขเป็นของจริง
+  // ใส่ contract address KKUB ของจริงที่นี่
+  const KKUB_CONTRACT_ADDRESS = '0x28f3f2b5117A7aB7e36D1c4Dd222Fb39b909F693'; 
   const KKUB_ABI = [
-    "function balanceOf(address owner) view returns (uint256)"
+    "function balanceOf(address owner) view returns (uint256)",
+    "function decimals() view returns (uint8)"
   ];
 
   async function connectWallet() {
-    if (window.ethereum) {
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [kubMainnet]
-        });
-      } catch(e) {
-        console.warn("Add chain error or user rejected:", e.message);
-      }
+    if (!window.ethereum) {
+      alert("กรุณาติดตั้ง MetaMask ก่อนครับ");
+      return;
+    }
+    
+    try {
+      // ขอเปลี่ยนเครือข่ายเป็น Bitkub Mainnet
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [kubMainnet]
+      });
+    } catch (err) {
+      console.warn("Add chain error or user rejected:", err.message);
+      // ถ้า user ปฏิเสธ หรือเครือข่ายถูกตั้งไว้แล้ว ให้ลองเชื่อมต่อเลย
+    }
 
-      try {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
+    try {
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      
+      document.getElementById('connectBtn').innerText = '✅ Connected: ' + userAddress.substring(0, 10) + '...';
+      
+      await updateBalances();
+      loadMyLand();
+      loadMarketplace();
+
+      // ตรวจจับการเปลี่ยนแปลงบัญชีหรือเครือข่าย
+      window.ethereum.on('accountsChanged', async () => {
         userAddress = await signer.getAddress();
-        alert("Connected: " + userAddress);
-
-        await updateBalances();
+        document.getElementById('connectBtn').innerText = '✅ Connected: ' + userAddress.substring(0, 10) + '...';
+        updateBalances();
         loadMyLand();
         loadMarketplace();
-      } catch (e) {
-        alert("Failed to connect wallet: " + e.message);
-      }
-    } else {
-      alert("Please install MetaMask.");
+      });
+
+      window.ethereum.on('chainChanged', (chainId) => {
+        if(chainId !== kubMainnet.chainId) {
+          alert("กรุณาเชื่อมต่อ MetaMask กับ Bitkub Chain Mainnet");
+        }
+        updateBalances();
+        loadMyLand();
+        loadMarketplace();
+      });
+
+    } catch (error) {
+      alert("ไม่สามารถเชื่อมต่อ Wallet: " + error.message);
     }
   }
 
   async function updateBalances() {
-    try {
-      const balanceBigInt = await provider.getBalance(userAddress);
-      const balance = ethers.utils.formatEther(balanceBigInt);
-      const gasPrice = await provider.getGasPrice();
-      const gasPriceGwei = ethers.utils.formatUnits(gasPrice, "gwei");
+    if(!provider || !userAddress) return;
 
+    try {
+      // KUB balance
+      const balanceRaw = await provider.getBalance(userAddress);
+      const balance = ethers.utils.formatEther(balanceRaw);
+
+      // Gas Price
+      const gasPriceRaw = await provider.getGasPrice();
+      const gasPriceGwei = ethers.utils.formatUnits(gasPriceRaw, 'gwei');
+
+      // KKUB balance
       const kkubContract = new ethers.Contract(KKUB_CONTRACT_ADDRESS, KKUB_ABI, provider);
       const kkubBalanceRaw = await kkubContract.balanceOf(userAddress);
-      const kkubBalance = ethers.utils.formatEther(kkubBalanceRaw);
+      const decimals = await kkubContract.decimals();
+      const kkubBalance = ethers.utils.formatUnits(kkubBalanceRaw, decimals);
 
       document.getElementById('balanceDisplay').innerText = 
-        `💰 KUB: ${parseFloat(balance).toFixed(4)} | Gas Price: ${parseFloat(gasPriceGwei).toFixed(2)} Gwei | KKUB: ${parseFloat(kkubBalance).toFixed(4)}`;
-    } catch(e) {
+        `💰 KUB: ${parseFloat(balance).toFixed(4)} | ⛽ Gas Price: ${parseFloat(gasPriceGwei).toFixed(2)} Gwei | 🪙 KKUB: ${parseFloat(kkubBalance).toFixed(4)}`;
+
+    } catch (error) {
       document.getElementById('balanceDisplay').innerText = '💰 Balance: Error';
-      console.error(e);
+      console.error(error);
     }
   }
+
+  document.getElementById('connectBtn').addEventListener('click', connectWallet);
+
+  // ฟังก์ชันอื่นๆ (เหมือนโค้ดของคุณเดิม)
 
   function showSection(id) {
     document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
@@ -238,22 +276,15 @@
   let scene, camera, renderer, controls, raycaster, mouse;
   let landObjects = [];
 
-  // ตัวอย่าง landConfigs แบบใช้โมเดล 3D แทนตาราง
   const landConfigs = [
     { id: 'Land-1', modelUrl: 'models/land1.glb', position: {x: 0, y: 0, z: 0} },
     { id: 'Land-2', modelUrl: 'models/land2.glb', position: {x: 15, y: 0, z: 0} },
     { id: 'Land-3', modelUrl: 'models/land3.glb', position: {x: 30, y: 0, z: 0} },
   ];
 
-  // จำลอง blockchainData
-  const blockchainData = {
-    lands: {}
-  };
-
-  // จำลอง marketplace (set ของ landId ที่ขาย)
+  const blockchainData = { lands: {} };
   let marketplaceForSale = new Set();
 
-  // สร้างข้อมูล dummy
   function loadDummyBlockchainData() {
     landConfigs.forEach(({id}) => {
       blockchainData.lands[id] = {
@@ -263,8 +294,6 @@
         modelUrl: `models/${id.toLowerCase()}.glb`
       };
     });
-
-    // กำหนดขายบางที่ดิน
     marketplaceForSale = new Set(['Land-2']);
     blockchainData.lands['Land-2'].price = 20;
   }
@@ -336,7 +365,6 @@
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(landObjects, true);
     if(intersects.length > 0) {
-      // หา root object ที่มี userData.id
       let obj = intersects[0].object;
       while(obj && !obj.userData.id) {
         obj = obj.parent;
@@ -532,8 +560,6 @@
     }
 
     const file = input.files[0];
-    // ในโปรเจกต์จริง: อัปโหลดไฟล์ไปยัง IPFS หรือ server แล้วอัปเดต URL ที่ blockchain
-    // ในตัวอย่างนี้ แค่แสดงชื่อไฟล์และจำลอง URL
     status.innerText = "Uploading " + file.name + "...";
 
     setTimeout(() => {
@@ -541,7 +567,7 @@
     }, 2000);
   }
 
-  // โหลดข้อมูลจำลองและเริ่มระบบ 3D
+  // โหลดข้อมูล dummy และเริ่ม 3D map
   loadDummyBlockchainData();
   init3DMap();
 
