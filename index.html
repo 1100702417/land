@@ -1,7 +1,551 @@
-<!-- Upload NFT Image -->
-<section id="uploadSection">
-  <h2>Upload NFT Image</h2>
-  <input type="file" id="modelFile" accept=".jpg,.png" />
-  <button onclick="uploadNFTImage()">Upload</button>
-  <p id="uploadStatus"></p>
-</section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BTL-VerseLand Complete Mainnet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    body {
+      margin: 0; font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      overflow-x: hidden;
+    }
+    h1, h2 {
+      text-align: center;
+      margin: 0.5em 0;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0 15px 0;
+    }
+    nav button {
+      background-color: #1abc9c;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    nav button:hover {
+      background-color: #16a085;
+    }
+    #threeContainer {
+      width: 100vw;
+      height: 50vh;
+      background-color: #000;
+      touch-action: none;
+      border-radius: 8px;
+      margin: 0 auto;
+      max-width: 1000px;
+      box-shadow: 0 0 12px #0ff;
+    }
+    #balanceDisplay {
+      text-align: center;
+      margin: 10px auto;
+      font-size: 1.3rem;
+      font-weight: 700;
+      max-width: 1000px;
+      margin-bottom: 15px;
+    }
+    section {
+      display: none;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      margin: 10px auto 20px auto;
+      max-width: 1000px;
+    }
+    .active-section {
+      display: block !important;
+    }
+    #landDetailSection div, #marketSection div, #myLandList div {
+      margin: 5px 0;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      word-break: break-word;
+    }
+    #marketplaceList div, #myLandList div {
+      cursor: pointer;
+    }
+    #marketplaceList div:hover, #myLandList div:hover {
+      background: rgba(26, 188, 156, 0.4);
+    }
+    #uploadSection input, #uploadSection button {
+      display: block;
+      margin: 10px auto;
+      max-width: 300px;
+      width: 90%;
+      font-size: 1rem;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+    }
+    #uploadSection button {
+      background-color: #1abc9c;
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    #uploadStatus {
+      text-align: center;
+      margin-top: 10px;
+      min-height: 1.2em;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌐 BTL-VerseLand Mainnet</h1>
+  <button onclick="connectWallet()" style="display:block; margin: 0 auto 10px auto; max-width: 300px; font-size:1.1rem;">🔗 Connect Metamask (Bitkub Chain Mainnet)</button>
+  <div id="balanceDisplay">💰 Balance: -</div>
+
+  <nav>
+    <button onclick="showSection('mapSection')">🗺️ Land Map</button>
+    <button onclick="showSection('landDetailSection')">🌽 Land Detail</button>
+    <button onclick="showSection('marketSection')">🛒 Marketplace</button>
+    <button onclick="showSection('uploadSection')">📄 Upload Model</button>
+    <button onclick="showSection('myLandSection')">👤 My Land</button>
+  </nav>
+
+  <!-- Land Map 3D -->
+  <section id="mapSection" class="active-section">
+    <h2>Land Map 3D with Models</h2>
+    <div id="threeContainer"></div>
+  </section>
+
+  <!-- Land Detail -->
+  <section id="landDetailSection">
+    <h2>Land Detail</h2>
+    <div><b>ID:</b> <span id="landId">-</span></div>
+    <div><b>Owner:</b> <span id="landOwner">-</span></div>
+    <div><b>Price (KUB):</b> <span id="landPrice">-</span></div>
+    <div><b>Description:</b></div>
+    <div id="landDescription" style="white-space: pre-wrap; min-height: 3em;">-</div>
+    <div><b>Model Preview:</b></div>
+    <div id="landModelPreview" style="width: 100%; height: 300px; background: #111; border-radius: 8px;"></div>
+    <div style="margin-top: 15px;">
+      <button id="buyLandBtn" onclick="buyLand()" style="background:#27ae60; display:none;">💰 Buy Land</button>
+      <button id="sellLandBtn" onclick="sellLand()" style="background:#c0392b; display:none;">📤 Sell Land</button>
+      <button id="cancelSellBtn" onclick="cancelSell()" style="background:#e67e22; display:none;">❌ Cancel Sell</button>
+    </div>
+  </section>
+
+  <!-- Marketplace -->
+  <section id="marketSection">
+    <h2>Marketplace</h2>
+    <div id="marketplaceList">Loading...</div>
+  </section>
+
+  <!-- Upload Model -->
+  <section id="uploadSection">
+    <h2>Upload 3D Model / Image</h2>
+    <input type="file" id="modelFile" accept=".glb,.gltf,.jpg,.png" />
+    <button onclick="uploadModel()">Upload</button>
+    <p id="uploadStatus"></p>
+  </section>
+
+  <!-- My Land -->
+  <section id="myLandSection">
+    <h2>My Land</h2>
+    <div id="myLandList">Loading...</div>
+  </section>
+
+<script>
+  let provider, signer, userAddress;
+
+  // Bitkub Chain Mainnet config
+  const kubMainnet = {
+    chainId: '0x65EE',  // 26046 decimal
+    chainName: 'Bitkub Chain Mainnet',
+    nativeCurrency: { name: 'KUB', symbol: 'KUB', decimals: 18 },
+    rpcUrls: ['https://rpc.bitkubchain.io'],
+    blockExplorerUrls: ['https://bkcscan.com']
+  };
+
+  // ตัวอย่าง Contract KKUB (ใส่ contract address จริง)
+  const KKUB_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'; // แก้ไขเป็นของจริง
+  const KKUB_ABI = [
+    "function balanceOf(address owner) view returns (uint256)"
+  ];
+
+  async function connectWallet() {
+    if (window.ethereum) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [kubMainnet]
+        });
+      } catch(e) {
+        console.warn("Add chain error or user rejected:", e.message);
+      }
+
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        alert("Connected: " + userAddress);
+
+        await updateBalances();
+        loadMyLand();
+        loadMarketplace();
+      } catch (e) {
+        alert("Failed to connect wallet: " + e.message);
+      }
+    } else {
+      alert("Please install MetaMask.");
+    }
+  }
+
+  async function updateBalances() {
+    try {
+      const balanceBigInt = await provider.getBalance(userAddress);
+      const balance = ethers.utils.formatEther(balanceBigInt);
+      const gasPrice = await provider.getGasPrice();
+      const gasPriceGwei = ethers.utils.formatUnits(gasPrice, "gwei");
+
+      const kkubContract = new ethers.Contract(KKUB_CONTRACT_ADDRESS, KKUB_ABI, provider);
+      const kkubBalanceRaw = await kkubContract.balanceOf(userAddress);
+      const kkubBalance = ethers.utils.formatEther(kkubBalanceRaw);
+
+      document.getElementById('balanceDisplay').innerText = 
+        `💰 KUB: ${parseFloat(balance).toFixed(4)} | Gas Price: ${parseFloat(gasPriceGwei).toFixed(2)} Gwei | KKUB: ${parseFloat(kkubBalance).toFixed(4)}`;
+    } catch(e) {
+      document.getElementById('balanceDisplay').innerText = '💰 Balance: Error';
+      console.error(e);
+    }
+  }
+
+  function showSection(id) {
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
+    document.getElementById(id).classList.add('active-section');
+  }
+
+  // 3D scene variables
+  let scene, camera, renderer, controls, raycaster, mouse;
+  let landObjects = [];
+
+  // ตัวอย่าง landConfigs แบบใช้โมเดล 3D แทนตาราง
+  const landConfigs = [
+    { id: 'Land-1', modelUrl: 'models/land1.glb', position: {x: 0, y: 0, z: 0} },
+    { id: 'Land-2', modelUrl: 'models/land2.glb', position: {x: 15, y: 0, z: 0} },
+    { id: 'Land-3', modelUrl: 'models/land3.glb', position: {x: 30, y: 0, z: 0} },
+  ];
+
+  // จำลอง blockchainData
+  const blockchainData = {
+    lands: {}
+  };
+
+  // จำลอง marketplace (set ของ landId ที่ขาย)
+  let marketplaceForSale = new Set();
+
+  // สร้างข้อมูล dummy
+  function loadDummyBlockchainData() {
+    landConfigs.forEach(({id}) => {
+      blockchainData.lands[id] = {
+        owner: Math.random() > 0.5 ? userAddress || "0xabc...123" : "0x123...abc",
+        price: null,
+        description: `Description for ${id}. Nice land plot.`,
+        modelUrl: `models/${id.toLowerCase()}.glb`
+      };
+    });
+
+    // กำหนดขายบางที่ดิน
+    marketplaceForSale = new Set(['Land-2']);
+    blockchainData.lands['Land-2'].price = 20;
+  }
+
+  function init3DMap() {
+    const container = document.getElementById('threeContainer');
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setClearColor(0x000000, 1);
+    container.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.1;
+
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1));
+
+    landObjects = [];
+    const loader = new THREE.GLTFLoader();
+
+    landConfigs.forEach(({id, modelUrl, position}) => {
+      loader.load(modelUrl, gltf => {
+        const model = gltf.scene;
+        model.position.set(position.x, position.y, position.z);
+        model.userData = { id };
+        scene.add(model);
+        landObjects.push(model);
+      }, undefined, err => {
+        console.error('Model load error:', err);
+      });
+    });
+
+    camera.position.set(15, 20, 50);
+    camera.lookAt(15, 0, 0);
+
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    container.addEventListener('click', onLandClick);
+
+    animate();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  function onLandClick(event) {
+    const container = renderer.domElement;
+    const rect = container.getBoundingClientRect();
+    let clientX = event.clientX, clientY = event.clientY;
+    if(event.touches && event.touches.length > 0) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    }
+    mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(landObjects, true);
+    if(intersects.length > 0) {
+      // หา root object ที่มี userData.id
+      let obj = intersects[0].object;
+      while(obj && !obj.userData.id) {
+        obj = obj.parent;
+      }
+      if(obj && obj.userData.id) {
+        showLandDetail(obj.userData.id);
+      }
+    }
+  }
+
+  function showLandDetail(landId) {
+    const data = blockchainData.lands[landId];
+    if(!data) return alert("Land data not found.");
+
+    document.getElementById('landId').innerText = landId;
+    document.getElementById('landOwner').innerText = data.owner;
+    document.getElementById('landPrice').innerText = data.price === null ? '-' : data.price;
+    document.getElementById('landDescription').innerText = data.description;
+
+    if(data.modelUrl) {
+      showModelPreview(data.modelUrl);
+    } else {
+      clearModelPreview();
+    }
+
+    const isOwner = userAddress && userAddress.toLowerCase() === data.owner.toLowerCase();
+    document.getElementById('buyLandBtn').style.display = (!isOwner && data.price !== null) ? 'inline-block' : 'none';
+    document.getElementById('sellLandBtn').style.display = (isOwner && data.price === null) ? 'inline-block' : 'none';
+    document.getElementById('cancelSellBtn').style.display = (isOwner && data.price !== null) ? 'inline-block' : 'none';
+
+    showSection('landDetailSection');
+  }
+
+  let previewScene, previewCamera, previewRenderer, previewControls;
+
+  function showModelPreview(url) {
+    const container = document.getElementById('landModelPreview');
+    if(previewRenderer) {
+      previewRenderer.dispose();
+      container.innerHTML = "";
+    }
+
+    previewScene = new THREE.Scene();
+    previewCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    previewRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    previewRenderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(previewRenderer.domElement);
+
+    previewControls = new THREE.OrbitControls(previewCamera, previewRenderer.domElement);
+    previewControls.enableDamping = true;
+    previewControls.dampingFactor = 0.1;
+
+    previewCamera.position.set(0, 2, 5);
+    previewScene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1));
+
+    const loader = new THREE.GLTFLoader();
+    loader.load(url, gltf => {
+      previewScene.add(gltf.scene);
+      animatePreview();
+    }, undefined, error => {
+      console.error("Model load error:", error);
+    });
+
+    function animatePreview() {
+      requestAnimationFrame(animatePreview);
+      previewControls.update();
+      previewRenderer.render(previewScene, previewCamera);
+    }
+  }
+
+  function clearModelPreview() {
+    const container = document.getElementById('landModelPreview');
+    container.innerHTML = "<p style='color:#888; padding:1em; text-align:center;'>No Model Uploaded</p>";
+    if(previewRenderer) {
+      previewRenderer.dispose();
+      previewRenderer = null;
+    }
+  }
+
+  async function buyLand() {
+    const landId = document.getElementById('landId').innerText;
+    if(!landId) return alert("No land selected.");
+
+    const land = blockchainData.lands[landId];
+    if(!land || land.price === null) return alert("This land is not for sale.");
+    if(!signer) return alert("Connect wallet first.");
+
+    if(confirm(`Confirm buying land ${landId} for ${land.price} KUB?`)) {
+      land.owner = userAddress;
+      land.price = null;
+      marketplaceForSale.delete(landId);
+
+      alert("Purchase successful!");
+
+      showLandDetail(landId);
+      loadMarketplace();
+      loadMyLand();
+      updateBalances();
+    }
+  }
+
+  async function sellLand() {
+    const landId = document.getElementById('landId').innerText;
+    if(!landId) return alert("No land selected.");
+
+    const land = blockchainData.lands[landId];
+    if(!land || land.owner.toLowerCase() !== userAddress.toLowerCase()) return alert("You do not own this land.");
+    if(land.price !== null) return alert("This land is already on sale.");
+
+    const price = prompt("Enter price in KUB to sell:");
+
+    if(price && !isNaN(price) && Number(price) > 0) {
+      land.price = Number(price);
+      marketplaceForSale.add(landId);
+
+      alert("Land listed for sale at " + price + " KUB");
+
+      showLandDetail(landId);
+      loadMarketplace();
+      loadMyLand();
+    } else {
+      alert("Invalid price.");
+    }
+  }
+
+  async function cancelSell() {
+    const landId = document.getElementById('landId').innerText;
+    if(!landId) return alert("No land selected.");
+
+    const land = blockchainData.lands[landId];
+    if(!land || land.owner.toLowerCase() !== userAddress.toLowerCase()) return alert("You do not own this land.");
+    if(land.price === null) return alert("This land is not for sale.");
+
+    if(confirm("Cancel selling this land?")) {
+      land.price = null;
+      marketplaceForSale.delete(landId);
+
+      alert("Sale cancelled.");
+
+      showLandDetail(landId);
+      loadMarketplace();
+      loadMyLand();
+    }
+  }
+
+  function loadMarketplace() {
+    const marketDiv = document.getElementById('marketplaceList');
+    marketDiv.innerHTML = "";
+    if(marketplaceForSale.size === 0) {
+      marketDiv.innerText = "No lands currently for sale.";
+      return;
+    }
+
+    marketplaceForSale.forEach(landId => {
+      const land = blockchainData.lands[landId];
+      if(land) {
+        const div = document.createElement('div');
+        div.textContent = `${landId} - Price: ${land.price} KUB - Owner: ${land.owner}`;
+        div.onclick = () => showLandDetail(landId);
+        marketDiv.appendChild(div);
+      }
+    });
+  }
+
+  function loadMyLand() {
+    const myLandDiv = document.getElementById('myLandList');
+    myLandDiv.innerHTML = "";
+    if(!userAddress) {
+      myLandDiv.innerText = "Connect wallet to see your lands.";
+      return;
+    }
+    const myLands = Object.entries(blockchainData.lands).filter(([id, data]) => data.owner.toLowerCase() === userAddress.toLowerCase());
+
+    if(myLands.length === 0) {
+      myLandDiv.innerText = "You do not own any lands.";
+      return;
+    }
+
+    myLands.forEach(([landId]) => {
+      const div = document.createElement('div');
+      div.textContent = landId;
+      div.onclick = () => showLandDetail(landId);
+      myLandDiv.appendChild(div);
+    });
+  }
+
+  async function uploadModel() {
+    const input = document.getElementById('modelFile');
+    const status = document.getElementById('uploadStatus');
+    if(input.files.length === 0) {
+      alert("Please select a file.");
+      return;
+    }
+
+    const file = input.files[0];
+    // ในโปรเจกต์จริง: อัปโหลดไฟล์ไปยัง IPFS หรือ server แล้วอัปเดต URL ที่ blockchain
+    // ในตัวอย่างนี้ แค่แสดงชื่อไฟล์และจำลอง URL
+    status.innerText = "Uploading " + file.name + "...";
+
+    setTimeout(() => {
+      status.innerText = `Upload successful! Model URL: https://example.com/models/${file.name}`;
+    }, 2000);
+  }
+
+  // โหลดข้อมูลจำลองและเริ่มระบบ 3D
+  loadDummyBlockchainData();
+  init3DMap();
+
+</script>
+
+</body>
+</html>
