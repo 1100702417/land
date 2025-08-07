@@ -1,22 +1,7 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MetaLand - Bitkub Chain</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-</head>
-<body>
-  <div class="container">
-    <h1>🌐 MetaLand</h1>
-    <button id="connectBtn">🔗 เชื่อมต่อ MetaMask (Bitkub Chain)</button>
-    <div id="walletAddress">🧾 Wallet: -</div>
-    <div id="balanceDisplay">
-      💰 KUB (Gas): -<br />
-      🪙 KKUB (Token): -
-    </div>
-  </div>
-  <script src="app.js"></script>
-</body>
-</html>
+<!-- Upload NFT Image -->
+<section id="uploadSection">
+  <h2>Upload NFT Image</h2>
+  <input type="file" id="modelFile" accept=".jpg,.png" />
+  <button onclick="uploadNFTImage()">Upload</button>
+  <p id="uploadStatus"></p>
+</section>
